@@ -32,6 +32,8 @@
 /* Board specific includes. */
 #include "board.h"
 
+extern void GC9A01A_SPI_MasterStarTransfer(void);
+
 /**
  * @brief Counter returned from NSCFunction.
  */
@@ -116,3 +118,14 @@ __attribute__((cmse_nonsecure_entry))
     return SystemCoreClock;
 }
 /*-----------------------------------------------------------*/
+
+#if defined(__IAR_SYSTEMS_ICC__)
+__cmse_nonsecure_entry
+#else
+__attribute__((cmse_nonsecure_entry))
+#endif
+    void
+    vDMADisplayData(void)
+{
+    GC9A01A_SPI_MasterStarTransfer();
+}

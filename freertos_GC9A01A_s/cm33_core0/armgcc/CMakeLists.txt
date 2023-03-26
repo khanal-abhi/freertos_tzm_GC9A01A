@@ -64,6 +64,12 @@ set(CMAKE_MODULE_PATH
 # include modules
 include(middleware_freertos-kernel_secure_context_LPC55S69_cm33_core0)
 
+include(driver_lpc_dma_LPC55S69_cm33_core0)
+
+include(driver_flexcomm_spi_LPC55S69_cm33_core0)
+
+include(driver_flexcomm_spi_dma_LPC55S69_cm33_core0)
+
 include(driver_common_LPC55S69_cm33_core0)
 
 include(driver_power_LPC55S69_cm33_core0)

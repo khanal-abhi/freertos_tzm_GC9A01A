@@ -179,7 +179,7 @@ static void prvSecureCallingTask(void *pvParameters)
 
     /* This task calls secure side functions. So allocate a
      * secure context for it. */
-    portALLOCATE_SECURE_CONTEXT(configMINIMAL_SECURE_STACK_SIZE);
+    portALLOCATE_SECURE_CONTEXT(configMINIMAL_SECURE_STACK_SIZE + 256);
 
     for (;;)
     {
@@ -208,6 +208,7 @@ static void prvSecureCallingTask(void *pvParameters)
 
         /* Wait for a second. */
         vTaskDelay(pdMS_TO_TICKS(1000));
+        vDMADisplayData();
     }
 }
 /*-----------------------------------------------------------*/
@@ -334,14 +335,14 @@ void vGetRegistersFromStack(uint32_t *pulFaultStackAddress)
     {
     }
 }
-/*-----------------------------------------------------------*/
 
-#if defined(__CC_ARM) || defined(__ARMCC_VERSION)
+// /*-----------------------------------------------------------*/
+
 /**
  * @brief The fault handler implementation calls a function called
  * vGetRegistersFromStack().
  */
-void MemManage_Handler(void)
+void HardFault_Handler(void)
 {
     __asm volatile(
         " tst lr, #4                                                \n"
@@ -353,7 +354,6 @@ void MemManage_Handler(void)
         "                                                           \n"
         " handler2_address_const: .word vGetRegistersFromStack      \n");
 }
-#endif
 /*-----------------------------------------------------------*/
 
 /* Non-secure main(). */

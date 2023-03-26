@@ -35,6 +35,88 @@
 #include "clock_config.h"
 #include "board.h"
 #include "fsl_power.h"
+#include "fsl_spi.h"
+#include "fsl_debug_console.h"
+
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
+#define VALID_STR "valid"
+#define INVALID_STR "invalid"
+
+#define GC9A01A_SPI_MASTER SPI7
+#define GC9A01A_SPI_MASTER_IRQ FLEXCOMM7_IRQn
+#define GC9A01A_SPI_MASTER_CLK_SRC kCLOCK_Flexcomm7
+#define GC9A01A_SPI_MASTER_CLK_FREQ CLOCK_GetFlexCommClkFreq(7U)
+#define GC9A01A_SPI_SSEL 1
+#define GC9A01A_SPI_MASTER_RX_CHANNEL 18
+#define GC9A01A_SPI_MASTER_TX_CHANNEL 19
+#define GC9A01A_SPI_MASTER_SPI_SPOL kSPI_SpolActiveAllLow
+
+#define TRANSFER_SIZE 64U /*! Transfer dataSize */
+
+/*******************************************************************************
+ * Prototypes
+ ******************************************************************************/
+static void GC9A01A_SPI_MasterInit(void);
+void GC9A01A_SPI_MasterStarTransfer(void);
+
+/*******************************************************************************
+ * Variables
+ ******************************************************************************/
+uint8_t masterRxData[TRANSFER_SIZE] = {0};
+uint8_t masterTxData[TRANSFER_SIZE] = {0};
+
+volatile bool isTransferCompleted = false;
+
+/*******************************************************************************
+ * Code
+ ******************************************************************************/
+
+static void GC9A01A_SPI_MasterInit(void)
+{
+    /* SPI init */
+    uint32_t srcClock_Hz = 0U;
+    spi_master_config_t masterConfig;
+    srcClock_Hz = GC9A01A_SPI_MASTER_CLK_FREQ;
+    assert(!(srcClock_Hz == 0));
+
+    SPI_MasterGetDefaultConfig(&masterConfig);
+    masterConfig.sselNum = (spi_ssel_t)GC9A01A_SPI_SSEL;
+    masterConfig.sselPol = (spi_spol_t)GC9A01A_SPI_MASTER_SPI_SPOL;
+    SPI_MasterInit(GC9A01A_SPI_MASTER, &masterConfig, srcClock_Hz);
+}
+
+void GC9A01A_SPI_MasterStarTransfer(void)
+{
+    spi_transfer_t masterXfer;
+    uint32_t i = 0U;
+
+    /* Set up the transfer data */
+    for (i = 0U; i < TRANSFER_SIZE; i++)
+    {
+        /* SPI is configured for 8 bits transfer - set only lower 8 bits of buffers */
+        masterTxData[i] = i % 256U;
+        masterRxData[i] = 0U;
+    }
+
+    /* Start master transfer */
+    masterXfer.txData = (uint8_t *)&masterTxData;
+    masterXfer.rxData = (uint8_t *)&masterRxData;
+    masterXfer.dataSize = TRANSFER_SIZE * sizeof(masterTxData[0]);
+    masterXfer.configFlags = kSPI_FrameAssert;
+
+    status_t res = SPI_MasterTransferBlocking(GC9A01A_SPI_MASTER, &masterXfer);
+    if (kStatus_Success != res)
+    {
+        PRINTF("Unable to tx data due to %d...\r\n", res);
+    }
+    else
+    {
+        PRINTF("Tx'd data successfully...\r\n");
+    }
+}
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -46,9 +128,9 @@
 /**
  * @brief LED port and pins.
  */
-#define LED_PORT      BOARD_LED_BLUE_GPIO_PORT
+#define LED_PORT BOARD_LED_BLUE_GPIO_PORT
 #define GREEN_LED_PIN BOARD_LED_GREEN_GPIO_PIN
-#define BLUE_LED_PIN  BOARD_LED_BLUE_GPIO_PIN
+#define BLUE_LED_PIN BOARD_LED_BLUE_GPIO_PIN
 
 /**
  * @brief typedef for non-secure Reset Handler.
@@ -132,9 +214,15 @@ int main(void)
     /* attach main clock divide to FLEXCOMM0 (debug console) */
     CLOCK_AttachClk(BOARD_DEBUG_UART_CLK_ATTACH);
 
+    CLOCK_AttachClk(kFRO12M_to_FLEXCOMM7);
+    RESET_PeripheralReset(kFC7_RST_SHIFT_RSTn);
+
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
     BOARD_InitDebugConsole();
+
+    /* Initialize SPI master with configuration. */
+    GC9A01A_SPI_MasterInit();
 
     /* Boot the non-secure code. */
     BootNonSecure(mainNONSECURE_APP_START_ADDRESS);
@@ -175,24 +263,24 @@ void vGetRegistersFromStack(uint32_t *pulFaultStackAddress)
     r3 = pulFaultStackAddress[3];
 
     r12 = pulFaultStackAddress[4];
-    lr  = pulFaultStackAddress[5];
-    pc  = pulFaultStackAddress[6];
+    lr = pulFaultStackAddress[5];
+    pc = pulFaultStackAddress[6];
     psr = pulFaultStackAddress[7];
 
     /* Configurable Fault Status Register. Consists of MMSR, BFSR and UFSR. */
-    _CFSR = (*((volatile unsigned long *)(0xE000ED28)));
+    _CFSR = (*((volatile unsigned long *)(0xE000ED28))); // 0x00100000
 
     /* Hard Fault Status Register. */
-    _HFSR = (*((volatile unsigned long *)(0xE000ED2C)));
+    _HFSR = (*((volatile unsigned long *)(0xE000ED2C))); // 0x40000000, must check others
 
     /* Debug Fault Status Register. */
-    _DFSR = (*((volatile unsigned long *)(0xE000ED30)));
+    _DFSR = (*((volatile unsigned long *)(0xE000ED30))); // 0x00000001 (likely just means halt state while debugging)
 
     /* Auxiliary Fault Status Register. */
-    _AFSR = (*((volatile unsigned long *)(0xE000ED3C)));
+    _AFSR = (*((volatile unsigned long *)(0xE000ED3C))); // 0
 
     /* Secure Fault Status Register. */
-    _SFSR = (*((volatile unsigned long *)(0xE000EDE4)));
+    _SFSR = (*((volatile unsigned long *)(0xE000EDE4))); // 0
 
     /* Read the Fault Address Registers. Note that these may not contain valid
      * values. Check BFARVALID/MMARVALID to see if they are valid values. */
@@ -204,6 +292,44 @@ void vGetRegistersFromStack(uint32_t *pulFaultStackAddress)
 
     /* Secure Fault Address Register. */
     _SFAR = (*((volatile unsigned long *)(0xE000EDE8)));
+
+    PRINTF("\r\n===================\r\n");
+    PRINTF("!!! HARD FAULT !!!!\r\n");
+    PRINTF("===================\r\n");
+    PRINTF("===================\r\n");
+    PRINTF("REG:  HEX VALUE\r\n");
+    PRINTF("===================\r\n");
+    PRINTF(" CFSR %08x\r\n", _CFSR);
+    PRINTF(" HFSR %08x\r\n", _HFSR);
+    PRINTF(" DFSR %08x\r\n", _DFSR);
+    PRINTF(" AFSR %08x\r\n", _AFSR);
+    PRINTF(" SFSR %08x\r\n", _SFSR);
+    if (_CFSR & (1 << 7))
+    {
+        PRINTF(" MMAR 0x%08x\r\n", _MMAR);
+    }
+    if (_SFSR & (1 << 7))
+    {
+        PRINTF(" SFAR 0x%08x\r\n", _SFAR);
+    }
+    if (_CFSR & (1 << 15))
+    {
+        PRINTF(" BFAR 0x%08x\r\n", _BFAR);
+    }
+    PRINTF("Special cases:\r\n");
+    if (_CFSR & (1 << 20))
+    {
+        PRINTF("  STKOF\r\n");
+    }
+    if (_CFSR & (1 << 24))
+    {
+        PRINTF("  UNALIGNED\r\n");
+    }
+    if (_CFSR & (1 << 25))
+    {
+        PRINTF("  DIVBYZERO\r\n");
+    }
+    PRINTF("\r\n===================\r\n");
 
     /* Remove compiler warnings about the variables not being used. */
     (void)r0;
@@ -227,5 +353,25 @@ void vGetRegistersFromStack(uint32_t *pulFaultStackAddress)
     for (;;)
     {
     }
+}
+// /*-----------------------------------------------------------*/
+
+/*-----------------------------------------------------------*/
+
+/**
+ * @brief The fault handler implementation calls a function called
+ * vGetRegistersFromStack().
+ */
+void HardFault_Handler(void)
+{
+    __asm volatile(
+        " tst lr, #4                                                \n"
+        " ite eq                                                    \n"
+        " mrseq r0, msp                                             \n"
+        " mrsne r0, psp                                             \n"
+        " ldr r1, handler2_address_const                            \n"
+        " bx r1                                                     \n"
+        "                                                           \n"
+        " handler2_address_const: .word vGetRegistersFromStack      \n");
 }
 /*-----------------------------------------------------------*/

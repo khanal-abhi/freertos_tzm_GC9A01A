@@ -61,4 +61,6 @@ void vToggleBlueLED(void);
  */
 uint32_t getSystemCoreClock(void);
 
+void vDMADisplayData(void);
+
 #endif /* __NSC_FUNCTIONS_H__ */
