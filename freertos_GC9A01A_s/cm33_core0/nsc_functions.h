@@ -27,6 +27,7 @@
 #define __NSC_FUNCTIONS_H__
 
 #include <stdint.h>
+#include "fsl_spi.h"
 
 /**
  * @brief Callback function pointer definition.
@@ -61,6 +62,6 @@ void vToggleBlueLED(void);
  */
 uint32_t getSystemCoreClock(void);
 
-void vDMADisplayData(void);
+void vDMADisplayData(spi_transfer_t *spiXfer);
 
 #endif /* __NSC_FUNCTIONS_H__ */

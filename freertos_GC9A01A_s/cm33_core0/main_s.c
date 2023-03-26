@@ -53,19 +53,15 @@
 #define GC9A01A_SPI_MASTER_TX_CHANNEL 19
 #define GC9A01A_SPI_MASTER_SPI_SPOL kSPI_SpolActiveAllLow
 
-#define TRANSFER_SIZE 64U /*! Transfer dataSize */
-
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
 static void GC9A01A_SPI_MasterInit(void);
-void GC9A01A_SPI_MasterStarTransfer(void);
+void GC9A01A_SPI_MasterStarTransfer(spi_transfer_t *spiXfer);
 
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-uint8_t masterRxData[TRANSFER_SIZE] = {0};
-uint8_t masterTxData[TRANSFER_SIZE] = {0};
 
 volatile bool isTransferCompleted = false;
 
@@ -87,26 +83,9 @@ static void GC9A01A_SPI_MasterInit(void)
     SPI_MasterInit(GC9A01A_SPI_MASTER, &masterConfig, srcClock_Hz);
 }
 
-void GC9A01A_SPI_MasterStarTransfer(void)
+void GC9A01A_SPI_MasterStarTransfer(spi_transfer_t *spiXfer)
 {
-    spi_transfer_t masterXfer;
-    uint32_t i = 0U;
-
-    /* Set up the transfer data */
-    for (i = 0U; i < TRANSFER_SIZE; i++)
-    {
-        /* SPI is configured for 8 bits transfer - set only lower 8 bits of buffers */
-        masterTxData[i] = i % 256U;
-        masterRxData[i] = 0U;
-    }
-
-    /* Start master transfer */
-    masterXfer.txData = (uint8_t *)&masterTxData;
-    masterXfer.rxData = (uint8_t *)&masterRxData;
-    masterXfer.dataSize = TRANSFER_SIZE * sizeof(masterTxData[0]);
-    masterXfer.configFlags = kSPI_FrameAssert;
-
-    status_t res = SPI_MasterTransferBlocking(GC9A01A_SPI_MASTER, &masterXfer);
+    status_t res = SPI_MasterTransferBlocking(GC9A01A_SPI_MASTER, spiXfer);
     if (kStatus_Success != res)
     {
         PRINTF("Unable to tx data due to %d...\r\n", res);

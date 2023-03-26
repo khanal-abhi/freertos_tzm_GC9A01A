@@ -31,8 +31,9 @@
 
 /* Board specific includes. */
 #include "board.h"
+#include "fsl_spi.h"
 
-extern void GC9A01A_SPI_MasterStarTransfer(void);
+extern void GC9A01A_SPI_MasterStarTransfer(spi_transfer_t* spiXfer);
 
 /**
  * @brief Counter returned from NSCFunction.
@@ -125,7 +126,7 @@ __cmse_nonsecure_entry
 __attribute__((cmse_nonsecure_entry))
 #endif
     void
-    vDMADisplayData(void)
+    vDMADisplayData(spi_transfer_t *spiXfer)
 {
-    GC9A01A_SPI_MasterStarTransfer();
+    GC9A01A_SPI_MasterStarTransfer(spiXfer);
 }

@@ -32,10 +32,11 @@
 
 #include "clock_config.h"
 #include "fsl_power.h"
+#include "fsl_spi.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-
+#define TRANSFER_SIZE 64U /*! Transfer dataSize */
 
 #if defined(__ARMCC_VERSION)
 /* Externs needed by MPU setup code.
@@ -112,14 +113,6 @@ static void prvCallback(void);
 static void prvSecureCallingTask(void *pvParameters);
 
 /**
- * @brief Implements the task which calls a secure side function to toggle the
- * on-board blue LED.
- *
- * @param pvParameters[in] Parameters as passed during task creation.
- */
-static void prvLEDTogglingTask(void *pvParameters);
-
-/**
  * @brief Stack overflow hook.
  */
 void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName);
@@ -140,24 +133,14 @@ void SystemInit(void)
     SCB->NSACR |= ((3UL << 0) | (3UL << 10)); /* enable CP0, CP1, CP10, CP11 Non-secure Access */
 }
 
-
 static void prvCreateTasks(void)
 {
     /* Create the secure calling task. */
-    (void)xTaskCreate(prvSecureCallingTask,           /* The function that implements the demo task. */
-                      "ScCall",                       /* The name to assign to the task being created. */
-                      configMINIMAL_STACK_SIZE + 100, /* The size, in WORDS (not bytes), of the stack to allocate for
-                                                   the task being created. */
-                      NULL,                           /* The task parameter is not being used. */
-                      portPRIVILEGE_BIT | tskIDLE_PRIORITY, /* The priority at which the task being created will run. */
-                      NULL);
-
-    /* Create the LED toggling task. */
-    (void)xTaskCreate(prvLEDTogglingTask,             /* The function that implements the demo task. */
-                      "LedToggle",                    /* The name to assign to the task being created. */
-                      configMINIMAL_STACK_SIZE + 100, /* The size, in WORDS (not bytes), of the stack to allocate for
-                                                   the task being created. */
-                      NULL,                           /* The task parameter is not being used. */
+    (void)xTaskCreate(prvSecureCallingTask,                 /* The function that implements the demo task. */
+                      "ScCall",                             /* The name to assign to the task being created. */
+                      configMINIMAL_STACK_SIZE + 200,       /* The size, in WORDS (not bytes), of the stack to allocate for
+                                                         the task being created. */
+                      NULL,                                 /* The task parameter is not being used. */
                       portPRIVILEGE_BIT | tskIDLE_PRIORITY, /* The priority at which the task being created will run. */
                       NULL);
 }
@@ -179,7 +162,27 @@ static void prvSecureCallingTask(void *pvParameters)
 
     /* This task calls secure side functions. So allocate a
      * secure context for it. */
-    portALLOCATE_SECURE_CONTEXT(configMINIMAL_SECURE_STACK_SIZE + 256);
+    portALLOCATE_SECURE_CONTEXT(configMINIMAL_SECURE_STACK_SIZE + 512);
+
+    spi_transfer_t masterXfer;
+    uint32_t i = 0U;
+
+    uint8_t *masterTxData = pvPortMalloc(TRANSFER_SIZE);
+    uint8_t *masterRxData = pvPortMalloc(TRANSFER_SIZE);
+
+    /* Set up the transfer data */
+    for (i = 0U; i < TRANSFER_SIZE; i++)
+    {
+        /* SPI is configured for 8 bits transfer - set only lower 8 bits of buffers */
+        masterTxData[i] = i % 256U;
+        masterRxData[i] = 0U;
+    }
+
+    /* Start master transfer */
+    masterXfer.txData = masterTxData;
+    masterXfer.rxData = masterRxData;
+    masterXfer.dataSize = TRANSFER_SIZE * sizeof(masterTxData[0]);
+    masterXfer.configFlags = kSPI_FrameAssert;
 
     for (;;)
     {
@@ -203,28 +206,11 @@ static void prvSecureCallingTask(void *pvParameters)
         vToggleGreenLED();
 
         /* Update the last values for both the counters. */
-        ulLastSecureCounter    = ulCurrentSecureCounter;
+        ulLastSecureCounter = ulCurrentSecureCounter;
         ulLastNonSecureCounter = ulNonSecureCounter;
 
         /* Wait for a second. */
-        vTaskDelay(pdMS_TO_TICKS(1000));
-        vDMADisplayData();
-    }
-}
-/*-----------------------------------------------------------*/
-
-static void prvLEDTogglingTask(void *pvParameters)
-{
-    /* This task calls secure side functions. So allocate a
-     * secure context for it. */
-    portALLOCATE_SECURE_CONTEXT(configMINIMAL_SECURE_STACK_SIZE);
-
-    for (;;)
-    {
-        /* Call the secure side function to toggle the on-board blue LED. */
-        vToggleBlueLED();
-
-        /* Wait for a second. */
+        vDMADisplayData(&masterXfer);
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
@@ -316,8 +302,8 @@ void vGetRegistersFromStack(uint32_t *pulFaultStackAddress)
     r3 = pulFaultStackAddress[3];
 
     r12 = pulFaultStackAddress[4];
-    lr  = pulFaultStackAddress[5];
-    pc  = pulFaultStackAddress[6];
+    lr = pulFaultStackAddress[5];
+    pc = pulFaultStackAddress[6];
     psr = pulFaultStackAddress[7];
 
     /* Remove compiler warnings about the variables not being used. */
