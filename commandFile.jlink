@@ -1,0 +1,7 @@
+device LPC55S69_M33_0
+speed 4000
+if swd
+loadfile freertos_GC9A01A_ns/cm33_core0/armgcc/debug/freertos_GC9A01A_ns.elf
+loadfile freertos_GC9A01A_s/cm33_core0/armgcc/debug/freertos_GC9A01A_s.elf
+reset
+q
