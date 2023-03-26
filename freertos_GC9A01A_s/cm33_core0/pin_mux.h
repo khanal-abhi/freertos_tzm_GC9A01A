@@ -23,14 +23,15 @@
  **********************************************************************************************************************/
 
 #if defined(__cplusplus)
-extern "C" {
+extern "C"
+{
 #endif
 
-/*!
- * @brief Calls initialization functions.
- *
- */
-void BOARD_InitBootPins(void);
+    /*!
+     * @brief Calls initialization functions.
+     *
+     */
+    void BOARD_InitBootPins(void);
 
 #define IOCON_PIO_DIGITAL_EN 0x0100u  /*!<@brief Enables digital function */
 #define IOCON_PIO_FUNC1 0x01u         /*!<@brief Selects pin function 1 */
@@ -41,11 +42,14 @@ void BOARD_InitBootPins(void);
 #define IOCON_PIO_OPENDRAIN_DI 0x00u  /*!<@brief Open drain is disabled */
 #define IOCON_PIO_SLEW_STANDARD 0x00u /*!<@brief Standard mode, output slew rate control is enabled */
 
-/*!
- * @brief Configures pin routing and optionally pin electrical features.
- *
- */
-void BOARD_InitPins(void); /* Function assigned for the Cortex-M33 (Core #0) */
+#define GC9A01A_DAT_CMD_PORT 1U
+#define GC9A01A_DAT_CMD_PIN 19U
+
+    /*!
+     * @brief Configures pin routing and optionally pin electrical features.
+     *
+     */
+    void BOARD_InitPins(void); /* Function assigned for the Cortex-M33 (Core #0) */
 
 #if defined(__cplusplus)
 }

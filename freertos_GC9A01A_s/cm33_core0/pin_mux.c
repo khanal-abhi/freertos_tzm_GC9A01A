@@ -25,6 +25,7 @@ processor_version: 6.0.0
 
 #include "fsl_common.h"
 #include "fsl_iocon.h"
+#include "fsl_gpio.h"
 #include "pin_mux.h"
 
 /* FUNCTION ************************************************************************************************************
@@ -35,7 +36,7 @@ processor_version: 6.0.0
  * END ****************************************************************************************************************/
 void BOARD_InitBootPins(void)
 {
-    BOARD_InitPins();
+  BOARD_InitPins();
 }
 
 /* clang-format off */
@@ -61,98 +62,108 @@ BOARD_InitPins:
 /* Function assigned for the Cortex-M33 (Core #0) */
 void BOARD_InitPins(void)
 {
-    /* Enables the clock for the I/O controller.: Enable Clock. */
-    CLOCK_EnableClock(kCLOCK_Iocon);
+  /* Enables the clock for the I/O controller.: Enable Clock. */
+  CLOCK_EnableClock(kCLOCK_Iocon);
 
-    const uint32_t port0_pin29_config = (/* Pin is configured as FC0_RXD_SDA_MOSI_DATA */
-                                         IOCON_PIO_FUNC1 |
-                                         /* No addition pin function */
-                                         IOCON_PIO_MODE_INACT |
-                                         /* Standard mode, output slew rate control is enabled */
-                                         IOCON_PIO_SLEW_STANDARD |
-                                         /* Input function is not inverted */
-                                         IOCON_PIO_INV_DI |
-                                         /* Enables digital function */
-                                         IOCON_PIO_DIGITAL_EN |
-                                         /* Open drain is disabled */
-                                         IOCON_PIO_OPENDRAIN_DI);
-    /* PORT0 PIN29 (coords: 92) is configured as FC0_RXD_SDA_MOSI_DATA */
-    IOCON_PinMuxSet(IOCON, 0U, 29U, port0_pin29_config);
+  const uint32_t port0_pin29_config = (/* Pin is configured as FC0_RXD_SDA_MOSI_DATA */
+                                       IOCON_PIO_FUNC1 |
+                                       /* No addition pin function */
+                                       IOCON_PIO_MODE_INACT |
+                                       /* Standard mode, output slew rate control is enabled */
+                                       IOCON_PIO_SLEW_STANDARD |
+                                       /* Input function is not inverted */
+                                       IOCON_PIO_INV_DI |
+                                       /* Enables digital function */
+                                       IOCON_PIO_DIGITAL_EN |
+                                       /* Open drain is disabled */
+                                       IOCON_PIO_OPENDRAIN_DI);
+  /* PORT0 PIN29 (coords: 92) is configured as FC0_RXD_SDA_MOSI_DATA */
+  IOCON_PinMuxSet(IOCON, 0U, 29U, port0_pin29_config);
 
-    const uint32_t port0_pin30_config = (/* Pin is configured as FC0_TXD_SCL_MISO_WS */
-                                         IOCON_PIO_FUNC1 |
-                                         /* No addition pin function */
-                                         IOCON_PIO_MODE_INACT |
-                                         /* Standard mode, output slew rate control is enabled */
-                                         IOCON_PIO_SLEW_STANDARD |
-                                         /* Input function is not inverted */
-                                         IOCON_PIO_INV_DI |
-                                         /* Enables digital function */
-                                         IOCON_PIO_DIGITAL_EN |
-                                         /* Open drain is disabled */
-                                         IOCON_PIO_OPENDRAIN_DI);
-    /* PORT0 PIN30 (coords: 94) is configured as FC0_TXD_SCL_MISO_WS */
-    IOCON_PinMuxSet(IOCON, 0U, 30U, port0_pin30_config);
+  const uint32_t port0_pin30_config = (/* Pin is configured as FC0_TXD_SCL_MISO_WS */
+                                       IOCON_PIO_FUNC1 |
+                                       /* No addition pin function */
+                                       IOCON_PIO_MODE_INACT |
+                                       /* Standard mode, output slew rate control is enabled */
+                                       IOCON_PIO_SLEW_STANDARD |
+                                       /* Input function is not inverted */
+                                       IOCON_PIO_INV_DI |
+                                       /* Enables digital function */
+                                       IOCON_PIO_DIGITAL_EN |
+                                       /* Open drain is disabled */
+                                       IOCON_PIO_OPENDRAIN_DI);
+  /* PORT0 PIN30 (coords: 94) is configured as FC0_TXD_SCL_MISO_WS */
+  IOCON_PinMuxSet(IOCON, 0U, 30U, port0_pin30_config);
 
-    const uint32_t port0_pin19_config = (/* Pin is configured as FC7_TXD_SCL_MISO_WS */
-                                         IOCON_PIO_FUNC7 |
-                                         /* Selects pull-up function */
-                                         IOCON_PIO_MODE_PULLUP |
-                                         /* Standard mode, output slew rate control is enabled */
-                                         IOCON_PIO_SLEW_STANDARD |
-                                         /* Input function is not inverted */
-                                         IOCON_PIO_INV_DI |
-                                         /* Enables digital function */
-                                         IOCON_PIO_DIGITAL_EN |
-                                         /* Open drain is disabled */
-                                         IOCON_PIO_OPENDRAIN_DI);
-    /* PORT0 PIN19 (coords: 90) is configured as FC7_TXD_SCL_MISO_WS */
-    IOCON_PinMuxSet(IOCON, 0U, 19U, port0_pin19_config);
+  const uint32_t port0_pin19_config = (/* Pin is configured as FC7_TXD_SCL_MISO_WS */
+                                       IOCON_PIO_FUNC7 |
+                                       /* Selects pull-up function */
+                                       IOCON_PIO_MODE_PULLUP |
+                                       /* Standard mode, output slew rate control is enabled */
+                                       IOCON_PIO_SLEW_STANDARD |
+                                       /* Input function is not inverted */
+                                       IOCON_PIO_INV_DI |
+                                       /* Enables digital function */
+                                       IOCON_PIO_DIGITAL_EN |
+                                       /* Open drain is disabled */
+                                       IOCON_PIO_OPENDRAIN_DI);
+  /* PORT0 PIN19 (coords: 90) is configured as FC7_TXD_SCL_MISO_WS */
+  IOCON_PinMuxSet(IOCON, 0U, 19U, port0_pin19_config);
 
-    const uint32_t port0_pin20_config = (/* Pin is configured as FC7_RXD_SDA_MOSI_DATA */
-                                         IOCON_PIO_FUNC7 |
-                                         /* Selects pull-up function */
-                                         IOCON_PIO_MODE_PULLUP |
-                                         /* Standard mode, output slew rate control is enabled */
-                                         IOCON_PIO_SLEW_STANDARD |
-                                         /* Input function is not inverted */
-                                         IOCON_PIO_INV_DI |
-                                         /* Enables digital function */
-                                         IOCON_PIO_DIGITAL_EN |
-                                         /* Open drain is disabled */
-                                         IOCON_PIO_OPENDRAIN_DI);
-    /* PORT0 PIN20 (coords: 74) is configured as FC7_RXD_SDA_MOSI_DATA */
-    IOCON_PinMuxSet(IOCON, 0U, 20U, port0_pin20_config);
+  const uint32_t port0_pin20_config = (/* Pin is configured as FC7_RXD_SDA_MOSI_DATA */
+                                       IOCON_PIO_FUNC7 |
+                                       /* Selects pull-up function */
+                                       IOCON_PIO_MODE_PULLUP |
+                                       /* Standard mode, output slew rate control is enabled */
+                                       IOCON_PIO_SLEW_STANDARD |
+                                       /* Input function is not inverted */
+                                       IOCON_PIO_INV_DI |
+                                       /* Enables digital function */
+                                       IOCON_PIO_DIGITAL_EN |
+                                       /* Open drain is disabled */
+                                       IOCON_PIO_OPENDRAIN_DI);
+  /* PORT0 PIN20 (coords: 74) is configured as FC7_RXD_SDA_MOSI_DATA */
+  IOCON_PinMuxSet(IOCON, 0U, 20U, port0_pin20_config);
 
-    const uint32_t port0_pin21_config = (/* Pin is configured as FC7_SCK */
-                                         IOCON_PIO_FUNC7 |
-                                         /* Selects pull-up function */
-                                         IOCON_PIO_MODE_PULLUP |
-                                         /* Standard mode, output slew rate control is enabled */
-                                         IOCON_PIO_SLEW_STANDARD |
-                                         /* Input function is not inverted */
-                                         IOCON_PIO_INV_DI |
-                                         /* Enables digital function */
-                                         IOCON_PIO_DIGITAL_EN |
-                                         /* Open drain is disabled */
-                                         IOCON_PIO_OPENDRAIN_DI);
-    /* PORT0 PIN21 (coords: 76) is configured as FC7_SCK */
-    IOCON_PinMuxSet(IOCON, 0U, 21U, port0_pin21_config);
+  const uint32_t port0_pin21_config = (/* Pin is configured as FC7_SCK */
+                                       IOCON_PIO_FUNC7 |
+                                       /* Selects pull-up function */
+                                       IOCON_PIO_MODE_PULLUP |
+                                       /* Standard mode, output slew rate control is enabled */
+                                       IOCON_PIO_SLEW_STANDARD |
+                                       /* Input function is not inverted */
+                                       IOCON_PIO_INV_DI |
+                                       /* Enables digital function */
+                                       IOCON_PIO_DIGITAL_EN |
+                                       /* Open drain is disabled */
+                                       IOCON_PIO_OPENDRAIN_DI);
+  /* PORT0 PIN21 (coords: 76) is configured as FC7_SCK */
+  IOCON_PinMuxSet(IOCON, 0U, 21U, port0_pin21_config);
 
-    const uint32_t port1_pin20_config = (/* Pin is configured as FC7_RTS_SCL_SSEL1 */
-                                         IOCON_PIO_FUNC1 |
-                                         /* Selects pull-up function */
-                                         IOCON_PIO_MODE_PULLUP |
-                                         /* Standard mode, output slew rate control is enabled */
-                                         IOCON_PIO_SLEW_STANDARD |
-                                         /* Input function is not inverted */
-                                         IOCON_PIO_INV_DI |
-                                         /* Enables digital function */
-                                         IOCON_PIO_DIGITAL_EN |
-                                         /* Open drain is disabled */
-                                         IOCON_PIO_OPENDRAIN_DI);
-    /* PORT1 PIN20 (coords: 4) is configured as FC7_RTS_SCL_SSEL1 */
-    IOCON_PinMuxSet(IOCON, 1U, 20U, port1_pin20_config);
+  const uint32_t port1_pin20_config = (/* Pin is configured as FC7_RTS_SCL_SSEL1 */
+                                       IOCON_PIO_FUNC1 |
+                                       /* Selects pull-up function */
+                                       IOCON_PIO_MODE_PULLUP |
+                                       /* Standard mode, output slew rate control is enabled */
+                                       IOCON_PIO_SLEW_STANDARD |
+                                       /* Input function is not inverted */
+                                       IOCON_PIO_INV_DI |
+                                       /* Enables digital function */
+                                       IOCON_PIO_DIGITAL_EN |
+                                       /* Open drain is disabled */
+                                       IOCON_PIO_OPENDRAIN_DI);
+  /* PORT1 PIN20 (coords: 4) is configured as FC7_RTS_SCL_SSEL1 */
+  IOCON_PinMuxSet(IOCON, 1U, 20U, port1_pin20_config);
+
+  /* Enables the clock for the GPIO0 module */
+  CLOCK_EnableClock(kCLOCK_Gpio1);
+
+  gpio_pin_config_t GC9A01A_DATA_CMD_config = {
+      .pinDirection = kGPIO_DigitalOutput,
+      .outputLogic = 0U,
+  };
+
+  GPIO_PinInit(GPIO, GC9A01A_DAT_CMD_PORT, GC9A01A_DAT_CMD_PIN, &GC9A01A_DATA_CMD_config);
 }
 /***********************************************************************************************************************
  * EOF
